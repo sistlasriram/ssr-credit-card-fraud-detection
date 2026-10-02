@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Credit Card Fraud Detection | ML Web Application</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+    <!-- Navigation Header -->
+    <nav class="navbar navbar-expand-lg navbar-dark app-navbar sticky-top">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center gap-2" href="/">
+                <span class="brand-icon"><i class="bi bi-shield-lock-fill"></i></span>
+                <span class="fw-bold fs-5 tracking-tight">FraudShield<span class="text-accent">ML</span></span>
+            </a>
+            <div class="d-flex align-items-center gap-3">
+                <span class="badge bg-model-badge d-none d-md-inline-flex align-items-center gap-1">
+                    <i class="bi bi-cpu"></i> Logistic Regression (~95.39% Test Acc)
+                </span>
+                <a href="#model-info-section" class="btn btn-sm btn-outline-light rounded-pill px-3">
+                    <i class="bi bi-info-circle me-1"></i> Model Specs
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Container -->
+    <main class="container py-4 my-2">
+
+        <!-- Hero Header -->
+        <header class="app-header text-center mb-4">
+            <div class="header-pill mx-auto mb-3">
+                <i class="bi bi-radar text-accent"></i> Real-time Transaction Classifier
+            </div>
+            <h1 class="display-6 fw-extrabold text-white mb-2">Credit Card Fraud Detection</h1>
+            <p class="text-muted mx-auto header-desc">
+                An intelligent Machine Learning web application powered by Scikit-Learn Logistic Regression.
+                Evaluates 30 transaction attributes to instantly classify transactions as legitimate or fraudulent with high-precision confidence scoring.
+            </p>
+        </header>
+
+        <!-- Model Loading Alert (if any error) -->
+        {% if model_error %}
+        <div class="alert alert-danger shadow-sm border-0 d-flex align-items-center mb-4" role="alert">
+            <i class="bi bi-exclamation-octagon-fill fs-4 me-3 flex-shrink-0"></i>
+            <div>
+                <strong>Model Loading Alert:</strong> {{ model_error }}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Backend Form Error Alert -->
+        {% if error %}
+        <div class="alert alert-warning alert-dismissible fade show shadow-sm border-0 mb-4" role="alert">
+            <div class="d-flex align-items-center">
+                <i class="bi bi-exclamation-triangle-fill fs-4 me-3 flex-shrink-0"></i>
+                <div>
+                    <strong>Validation Warning:</strong> {{ error }}
+                </div>
+            </div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endif %}
+
+        <!-- Client-Side Dynamic Alert Container -->
+        <div id="dynamic-alert-container"></div>
+
+        <!-- Result Card Section (Visible when result is computed) -->
+        <section id="result-container" class="mb-4 {% if not result %}d-none{% endif %}">
+            <div id="result-card" class="result-card p-4 rounded-4 shadow-lg {% if result and result.status_type == 'fraud' %}fraud-card{% elif result and result.status_type == 'legitimate' %}legit-card{% endif %}">
+                
+                <!-- Primary Classification & Probability Header -->
+                <div class="row align-items-center g-4 pb-3 border-bottom border-dark-subtle mb-3">
+                    <div class="col-md-7">
+                        <div class="d-flex align-items-center gap-3 mb-2">
+                            <div id="result-status-icon" class="status-icon-box">
+                                {% if result and result.status_type == 'fraud' %}
+                                    <i class="bi bi-shield-slash-fill text-danger"></i>
+                                {% else %}
+                                    <i class="bi bi-shield-check-fill text-success"></i>
+                                {% endif %}
+                            </div>
+                            <div>
+                                <span class="badge rounded-pill text-uppercase px-3 py-1 mb-1 result-pill-badge" id="result-badge">
+                                    {% if result and result.status_type == 'fraud' %}High Risk Anomaly{% else %}Secure Verified{% endif %}
+                                </span>
+                                <h2 class="h3 fw-bold mb-0 text-white" id="result-label">
+                                    {% if result %}{{ result.label }}{% endif %}
+                                </h2>
+                            </div>
+                        </div>
+                        <p class="text-secondary small mb-0 mt-2" id="result-message">
+                            {% if result and result.status_type == 'fraud' %}
+                                Transaction characteristics strongly resemble high-risk fraudulent behavior detected by the Logistic Regression classifier.
+                            {% else %}
+                                Transaction metrics are consistent with standard legitimate user spending patterns.
+                            {% endif %}
+                        </p>
+                    </div>
+                    <div class="col-md-5">
+                        <div class="prob-box p-3 rounded-3">
+                            <div class="d-flex justify-content-between small text-white-50 mb-1">
+                                <span>Model Confidence</span>
+                                <strong class="text-white" id="result-confidence">
+                                    {% if result and result.confidence_percent is not none %}{{ result.confidence_percent }}%{% else %}N/A{% endif %}
+                                </strong>
+                            </div>
+                            <!-- Legitimacy Meter -->
+                            <div class="mb-2">
+                                <div class="d-flex justify-content-between small mb-1">
+                                    <span class="text-white-50"><i class="bi bi-check-circle me-1 text-success"></i>Legitimate Prob.</span>
+                                    <span class="text-white fw-semibold" id="legit-prob-text">
+                                        {% if result and result.legit_prob_percent is not none %}{{ result.legit_prob_percent }}%{% else %}--{% endif %}
+                                    </span>
+                                </div>
+                                <div class="progress progress-dark" style="height: 8px;">
+                                    <div id="legit-progress-bar" class="progress-bar bg-success" role="progressbar" 
+                                         style="width: {{ result.legit_prob_percent if result and result.legit_prob_percent is not none else 0 }}%;"></div>
+                                </div>
+                            </div>
+                            <!-- Fraud Risk Meter -->
+                            <div>
+                                <div class="d-flex justify-content-between small mb-1">
+                                    <span class="text-white-50"><i class="bi bi-exclamation-triangle me-1 text-danger"></i>Fraud Prob.</span>
+                                    <span class="text-white fw-semibold" id="fraud-prob-text">
+                                        {% if result and result.fraud_prob_percent is not none %}{{ result.fraud_prob_percent }}%{% else %}--{% endif %}
+                                    </span>
+                                </div>
+                                <div class="progress progress-dark" style="height: 8px;">
+                                    <div id="fraud-progress-bar" class="progress-bar bg-danger" role="progressbar" 
+                                         style="width: {{ result.fraud_prob_percent if result and result.fraud_prob_percent is not none else 0 }}%;"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- REAL-WORLD RISK ANALYTICS & BANKING ACTION BANNER -->
+                <div class="row g-3 mb-4">
+                    <div class="col-md-8">
+                        <div class="p-3 rounded-3 action-banner-box d-flex align-items-center gap-3" id="action-banner">
+                            <div class="action-icon-circle" id="action-icon">
+                                {% if result and result.action_code == 'BLOCK' %}
+                                    <i class="bi bi-slash-circle-fill text-danger fs-3"></i>
+                                {% elif result and result.action_code == 'STEP_UP_OTP' %}
+                                    <i class="bi bi-shield-exclamation text-warning fs-3"></i>
+                                {% else %}
+                                    <i class="bi bi-patch-check-fill text-success fs-3"></i>
+                                {% endif %}
+                            </div>
+                            <div class="flex-grow-1">
+                                <span class="badge bg-dark-subtle text-uppercase small" id="action-code-badge">
+                                    {% if result %}{{ result.action_code }}{% else %}ACTION PENDING{% endif %}
+                                </span>
+                                <h3 class="h6 fw-bold text-white mb-1 mt-1" id="action-title">
+                                    {% if result %}{{ result.recommended_action }}{% else %}Action Analysis{% endif %}
+                                </h3>
+                                <p class="small text-secondary mb-0" id="action-note">
+                                    {% if result %}{{ result.action_note }}{% endif %}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="p-3 rounded-3 stat-box h-100 d-flex flex-column justify-content-center text-center">
+                            <span class="text-secondary small fw-semibold text-uppercase">Financial Risk Score</span>
+                            <div class="display-6 fw-bold my-1" id="risk-score-display">
+                                {% if result %}{{ result.risk_score }}{% else %}0.0{% endif %}<span class="fs-5 text-secondary">/100</span>
+                            </div>
+                            <span class="small text-white-50" id="risk-score-label">
+                                {% if result and result.risk_score >= 70 %}Critical Anomaly Threshold
+                                {% elif result and result.risk_score >= 30 %}Moderate Review Range
+                                {% else %}Safe Low-Risk Zone{% endif %}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- EXPLAINABLE AI (XAI): FEATURE CONTRIBUTION & REASON CODES -->
+                <div class="xai-container p-3 rounded-3 bg-dark-subtle border border-dark-subtle">
+                    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="section-badge bg-info-subtle text-info"><i class="bi bi-cpu-fill"></i></span>
+                            <div>
+                                <h3 class="h6 fw-bold text-white mb-0">Explainable AI (XAI) & Feature Contribution Breakdown</h3>
+                                <small class="text-secondary">Shows mathematical contribution of individual features to the Logistic Regression decision ($\beta_i \cdot X_i$)</small>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-outline-light rounded-pill px-3" id="btn-copy-audit">
+                            <i class="bi bi-clipboard-check me-1"></i> Copy Audit Summary
+                        </button>
+                    </div>
+
+                    <div class="row g-3">
+                        <!-- Top Risk Drivers (Pushed toward Fraud) -->
+                        <div class="col-md-6">
+                            <div class="driver-card p-3 rounded-3 h-100">
+                                <h4 class="h6 fw-bold text-danger mb-2 d-flex align-items-center gap-2">
+                                    <i class="bi bi-arrow-up-circle-fill"></i> Top Risk Drivers (Pushed Toward Fraud)
+                                </h4>
+                                <div id="risk-drivers-list">
+                                    {% if result and result.top_risk_drivers %}
+                                        {% for driver in result.top_risk_drivers %}
+                                        <div class="driver-row p-2 rounded mb-2 bg-dark">
+                                            <div class="d-flex justify-content-between small mb-1">
+                                                <strong class="text-white font-monospace">{{ driver.feature }}</strong>
+                                                <span class="text-danger fw-bold">+{{ "%.3f"|format(driver.contribution) }} log-odds</span>
+                                            </div>
+                                            <div class="progress progress-dark" style="height: 5px;">
+                                                <div class="progress-bar bg-danger" style="width: {{ [driver.abs_contribution * 15, 100]|min }}%;"></div>
+                                            </div>
+                                            <div class="d-flex justify-content-between text-muted x-small mt-1">
+                                                <span>{{ driver.description }}</span>
+                                                <span class="font-monospace">val: {{ driver.value }} | weight: {{ driver.coefficient }}</span>
+                                            </div>
+                                        </div>
+                                        {% endfor %}
+                                    {% else %}
+                                        <p class="text-muted small mb-0">No strong risk drivers detected for this transaction.</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Top Safety Factors (Pushed toward Legitimacy) -->
+                        <div class="col-md-6">
+                            <div class="driver-card p-3 rounded-3 h-100">
+                                <h4 class="h6 fw-bold text-success mb-2 d-flex align-items-center gap-2">
+                                    <i class="bi bi-arrow-down-circle-fill"></i> Top Safety Factors (Pulled Toward Legitimate)
+                                </h4>
+                                <div id="safety-drivers-list">
+                                    {% if result and result.top_safety_drivers %}
+                                        {% for driver in result.top_safety_drivers %}
+                                        <div class="driver-row p-2 rounded mb-2 bg-dark">
+                                            <div class="d-flex justify-content-between small mb-1">
+                                                <strong class="text-white font-monospace">{{ driver.feature }}</strong>
+                                                <span class="text-success fw-bold">{{ "%.3f"|format(driver.contribution) }} log-odds</span>
+                                            </div>
+                                            <div class="progress progress-dark" style="height: 5px;">
+                                                <div class="progress-bar bg-success" style="width: {{ [driver.abs_contribution * 15, 100]|min }}%;"></div>
+                                            </div>
+                                            <div class="d-flex justify-content-between text-muted x-small mt-1">
+                                                <span>{{ driver.description }}</span>
+                                                <span class="font-monospace">val: {{ driver.value }} | weight: {{ driver.coefficient }}</span>
+                                            </div>
+                                        </div>
+                                        {% endfor %}
+                                    {% else %}
+                                        <p class="text-muted small mb-0">No strong safety factors detected for this transaction.</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- Main Input Form & Dashboard Grid -->
+        <div class="row g-4">
+            <!-- Left / Center: 30 Feature Input Form -->
+            <div class="col-lg-8">
+                <div class="card app-card p-4 rounded-4 shadow-sm border-0">
+                    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 pb-3 mb-3 border-bottom border-dark-subtle">
+                        <div>
+                            <h2 class="h5 fw-bold text-white mb-0">Transaction Input Form</h2>
+                            <small class="text-muted">Enter all 30 numerical transaction values for inference</small>
+                        </div>
+                        <!-- Quick Test Presets (Saves typing 30 numbers) -->
+                        <div class="btn-group btn-group-sm" role="group">
+                            <button type="button" class="btn btn-outline-success" id="btn-load-legit" title="Load real legitimate transaction">
+                                <i class="bi bi-shield-check me-1"></i> Legit Sample
+                            </button>
+                            <button type="button" class="btn btn-outline-danger" id="btn-load-fraud" title="Load real fraudulent transaction">
+                                <i class="bi bi-shield-slash me-1"></i> Fraud Sample
+                            </button>
+                        </div>
+                    </div>
+
+                    <form id="prediction-form" method="POST" action="/" novalidate>
+
+                        <!-- SECTION 1: Transaction Information -->
+                        <div class="feature-section mb-4">
+                            <div class="section-title-wrap mb-3 d-flex align-items-center gap-2">
+                                <span class="section-badge"><i class="bi bi-receipt"></i></span>
+                                <h3 class="h6 fw-bold text-white mb-0">Transaction Information</h3>
+                                <span class="badge bg-secondary-subtle text-secondary ms-auto">2 Features</span>
+                            </div>
+                            <div class="row g-3">
+                                <!-- Time -->
+                                <div class="col-sm-6">
+                                    <div class="form-floating input-group-custom">
+                                        <input type="number" step="any" class="form-control" id="Time" name="Time" 
+                                               placeholder="e.g. 0.0" 
+                                               value="{{ form_values.get('Time', '') }}" required>
+                                        <label for="Time">Time (Seconds elapsed)</label>
+                                        <div class="invalid-feedback">Please enter numerical Time value.</div>
+                                    </div>
+                                    <small class="text-muted d-block mt-1 px-1">Elapsed seconds since first dataset transaction</small>
+                                </div>
+                                <!-- Amount -->
+                                <div class="col-sm-6">
+                                    <div class="form-floating input-group-custom">
+                                        <input type="number" step="any" class="form-control" id="Amount" name="Amount" 
+                                               placeholder="e.g. 149.62" 
+                                               value="{{ form_values.get('Amount', '') }}" required>
+                                        <label for="Amount">Amount ($ USD)</label>
+                                        <div class="invalid-feedback">Please enter numerical Amount value.</div>
+                                    </div>
+                                    <small class="text-muted d-block mt-1 px-1">Transaction transaction value in currency units</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- SECTION 2: Principal Components V1 - V10 -->
+                        <div class="feature-section mb-4">
+                            <div class="section-title-wrap mb-3 d-flex align-items-center gap-2">
+                                <span class="section-badge"><i class="bi bi-layers"></i></span>
+                                <h3 class="h6 fw-bold text-white mb-0">Principal Components (V1 – V10)</h3>
+                                <span class="badge bg-secondary-subtle text-secondary ms-auto">10 Features</span>
+                            </div>
+                            <div class="row row-cols-2 row-cols-sm-3 row-cols-md-5 g-2">
+                                {% for i in range(1, 11) %}
+                                {% set feat = "V" ~ i %}
+                                <div class="col">
+                                    <div class="form-floating input-group-custom">
+                                        <input type="number" step="any" class="form-control form-control-sm" 
+                                               id="{{ feat }}" name="{{ feat }}" placeholder="{{ feat }}" 
+                                               value="{{ form_values.get(feat, '') }}" required>
+                                        <label for="{{ feat }}">{{ feat }}</label>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <!-- SECTION 3: Principal Components V11 - V20 -->
+                        <div class="feature-section mb-4">
+                            <div class="section-title-wrap mb-3 d-flex align-items-center gap-2">
+                                <span class="section-badge"><i class="bi bi-layers-half"></i></span>
+                                <h3 class="h6 fw-bold text-white mb-0">Principal Components (V11 – V20)</h3>
+                                <span class="badge bg-secondary-subtle text-secondary ms-auto">10 Features</span>
+                            </div>
+                            <div class="row row-cols-2 row-cols-sm-3 row-cols-md-5 g-2">
+                                {% for i in range(11, 21) %}
+                                {% set feat = "V" ~ i %}
+                                <div class="col">
+                                    <div class="form-floating input-group-custom">
+                                        <input type="number" step="any" class="form-control form-control-sm" 
+                                               id="{{ feat }}" name="{{ feat }}" placeholder="{{ feat }}" 
+                                               value="{{ form_values.get(feat, '') }}" required>
+                                        <label for="{{ feat }}">{{ feat }}</label>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <!-- SECTION 4: Principal Components V21 - V28 -->
+                        <div class="feature-section mb-4">
+                            <div class="section-title-wrap mb-3 d-flex align-items-center gap-2">
+                                <span class="section-badge"><i class="bi bi-layers-fill"></i></span>
+                                <h3 class="h6 fw-bold text-white mb-0">Principal Components (V21 – V28)</h3>
+                                <span class="badge bg-secondary-subtle text-secondary ms-auto">8 Features</span>
+                            </div>
+                            <div class="row row-cols-2 row-cols-sm-4 g-2">
+                                {% for i in range(21, 29) %}
+                                {% set feat = "V" ~ i %}
+                                <div class="col">
+                                    <div class="form-floating input-group-custom">
+                                        <input type="number" step="any" class="form-control form-control-sm" 
+                                               id="{{ feat }}" name="{{ feat }}" placeholder="{{ feat }}" 
+                                               value="{{ form_values.get(feat, '') }}" required>
+                                        <label for="{{ feat }}">{{ feat }}</label>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <!-- Form Action Buttons -->
+                        <div class="d-flex flex-wrap align-items-center gap-3 pt-3 border-top border-dark-subtle">
+                            <button type="submit" id="btn-predict" class="btn btn-primary btn-lg px-4 flex-grow-1 d-flex align-items-center justify-content-center gap-2">
+                                <span id="btn-spinner" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+                                <i class="bi bi-shield-check fs-5" id="btn-icon"></i>
+                                <span id="btn-text">Predict Transaction</span>
+                            </button>
+                            <button type="button" id="btn-reset" class="btn btn-outline-secondary btn-lg px-4 d-flex align-items-center gap-2">
+                                <i class="bi bi-arrow-counterclockwise"></i> Reset
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Right: Model Information & Specs Sidebar -->
+            <div class="col-lg-4" id="model-info-section">
+                <!-- Model Performance Card -->
+                <div class="card app-card p-4 rounded-4 shadow-sm border-0 mb-4">
+                    <div class="d-flex align-items-center gap-2 mb-3">
+                        <span class="section-badge bg-primary-subtle text-primary"><i class="bi bi-graph-up-arrow"></i></span>
+                        <h2 class="h6 fw-bold text-white mb-0">Model Performance</h2>
+                    </div>
+
+                    <div class="stat-box p-3 rounded-3 mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="text-muted small">Balanced Test Accuracy</span>
+                            <span class="badge bg-success-subtle text-success fw-bold">Validated</span>
+                        </div>
+                        <div class="h3 fw-bold text-white mb-0">
+                            {% if model_metrics and model_metrics.test_accuracy %}
+                                {{ "%.2f"|format(model_metrics.test_accuracy * 100) }}%
+                            {% else %}
+                                95.39%
+                            {% endif %}
+                        </div>
+                        <small class="text-white-50">Evaluated on stratified balanced test split</small>
+                    </div>
+
+                    <div class="stat-box p-3 rounded-3 mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="text-muted small">Training Accuracy</span>
+                            <span class="badge bg-info-subtle text-info fw-bold">Train Split</span>
+                        </div>
+                        <div class="h3 fw-bold text-white mb-0">
+                            {% if model_metrics and model_metrics.training_accuracy %}
+                                {{ "%.2f"|format(model_metrics.training_accuracy * 100) }}%
+                            {% else %}
+                                96.36%
+                            {% endif %}
+                        </div>
+                        <small class="text-white-50">Fit via Scikit-Learn Logistic Regression</small>
+                    </div>
+
+                    <ul class="list-unstyled mb-0 small text-secondary border-top border-dark-subtle pt-3">
+                        <li class="d-flex justify-content-between py-1">
+                            <span><i class="bi bi-diagram-3 me-2"></i>Algorithm:</span>
+                            <strong class="text-white">Logistic Regression</strong>
+                        </li>
+                        <li class="d-flex justify-content-between py-1">
+                            <span><i class="bi bi-input-cursor me-2"></i>Input Features:</span>
+                            <strong class="text-white">30 Numerical Features</strong>
+                        </li>
+                        <li class="d-flex justify-content-between py-1">
+                            <span><i class="bi bi-pie-chart me-2"></i>Sampling Strategy:</span>
+                            <strong class="text-white">Random Undersampling</strong>
+                        </li>
+                        <li class="d-flex justify-content-between py-1">
+                            <span><i class="bi bi-shuffle me-2"></i>Split Ratio:</span>
+                            <strong class="text-white">80% Train / 20% Test</strong>
+                        </li>
+                        <li class="d-flex justify-content-between py-1">
+                            <span><i class="bi bi-check2-all me-2"></i>Target Output:</span>
+                            <strong class="text-white">Class (0: Legit, 1: Fraud)</strong>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Guidance & Explanation Card -->
+                <div class="card app-card p-4 rounded-4 shadow-sm border-0">
+                    <div class="d-flex align-items-center gap-2 mb-3">
+                        <span class="section-badge bg-warning-subtle text-warning"><i class="bi bi-lightbulb"></i></span>
+                        <h2 class="h6 fw-bold text-white mb-0">Feature Guidance</h2>
+                    </div>
+                    <p class="text-muted small mb-2">
+                        Features <strong class="text-white">V1 through V28</strong> are the principal components obtained with Principal Component Analysis (PCA) due to confidentiality reasons.
+                    </p>
+                    <p class="text-muted small mb-3">
+                        <strong class="text-white">Time</strong> contains the seconds elapsed between each transaction and the first transaction in the dataset. <strong class="text-white">Amount</strong> is the transaction amount.
+                    </p>
+                    <div class="p-3 bg-dark-subtle rounded-3 small">
+                        <div class="fw-semibold text-white mb-1"><i class="bi bi-speedometer2 text-accent me-1"></i> Quick Test Tip:</div>
+                        <span class="text-muted">Click <strong>Legit Sample</strong> or <strong>Fraud Sample</strong> at the top to automatically fill all 30 fields with real verified transactions.</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="app-footer py-4 mt-5 border-top border-dark-subtle text-center text-muted small">
+        <div class="container">
+            <p class="mb-1">Credit Card Fraud Detection Machine Learning Application &bull; Based strictly on reference notebook</p>
+            <p class="mb-0 text-white-50">Built with Flask &bull; Scikit-learn &bull; Pandas &bull; NumPy &bull; Bootstrap 5</p>
+        </div>
+    </footer>
+
+    <!-- Bootstrap 5 JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Custom Application JS -->
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>

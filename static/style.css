@@ -1,0 +1,290 @@
+/* 
+=============================================================================
+ Credit Card Fraud Detection - Modern ML Dashboard Stylesheet
+ Sleek Fintech / Cybersecurity Dark Theme
+=============================================================================
+*/
+
+:root {
+    --bg-main: #0b0f19;
+    --bg-card: #131b2e;
+    --bg-card-subtle: #19233c;
+    --bg-input: #0e1424;
+    --border-color: #23314f;
+    --border-focus: #3b82f6;
+    --text-primary: #f8fafc;
+    --text-secondary: #94a3b8;
+    --accent: #38bdf8;
+    --accent-glow: rgba(56, 189, 248, 0.25);
+    
+    /* Legitimate theme colors */
+    --legit-color: #10b981;
+    --legit-bg: rgba(16, 185, 129, 0.12);
+    --legit-border: #059669;
+    --legit-glow: rgba(16, 185, 129, 0.35);
+
+    /* Fraud theme colors */
+    --fraud-color: #ef4444;
+    --fraud-bg: rgba(239, 68, 68, 0.12);
+    --fraud-border: #dc2626;
+    --fraud-glow: rgba(239, 68, 68, 0.35);
+}
+
+body {
+    background-color: var(--bg-main);
+    color: var(--text-primary);
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+}
+
+/* Navbar */
+.app-navbar {
+    background-color: rgba(11, 15, 25, 0.88);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.brand-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    background: linear-gradient(135deg, #2563eb, #38bdf8);
+    color: #ffffff;
+    border-radius: 10px;
+    font-size: 1.15rem;
+}
+
+.text-accent {
+    color: var(--accent);
+}
+
+.bg-model-badge {
+    background: rgba(56, 189, 248, 0.12);
+    color: var(--accent);
+    border: 1px solid rgba(56, 189, 248, 0.3);
+    font-weight: 600;
+    font-size: 0.8rem;
+    padding: 0.4rem 0.75rem;
+    border-radius: 20px;
+}
+
+/* Hero Header */
+.header-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: rgba(59, 130, 246, 0.1);
+    border: 1px solid rgba(59, 130, 246, 0.25);
+    color: #93c5fd;
+    font-size: 0.85rem;
+    font-weight: 600;
+    padding: 0.35rem 1rem;
+    border-radius: 50px;
+}
+
+.header-desc {
+    max-width: 680px;
+    font-size: 0.98rem;
+    line-height: 1.6;
+}
+
+/* Cards */
+.app-card {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color) !important;
+}
+
+/* Feature Sections */
+.feature-section {
+    background-color: rgba(14, 20, 36, 0.45);
+    border: 1px solid var(--border-color);
+    padding: 1.15rem;
+    border-radius: 14px;
+}
+
+.section-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    background: rgba(56, 189, 248, 0.15);
+    color: var(--accent);
+    border-radius: 8px;
+    font-size: 0.95rem;
+}
+
+/* Inputs */
+.input-group-custom .form-control {
+    background-color: var(--bg-input);
+    border: 1px solid var(--border-color);
+    color: #ffffff;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.88rem;
+    transition: all 0.2s ease-in-out;
+}
+
+.input-group-custom .form-control:focus {
+    background-color: #121a30;
+    border-color: var(--border-focus);
+    box-shadow: 0 0 0 0.25rem rgba(59, 130, 246, 0.25);
+    color: #ffffff;
+}
+
+.input-group-custom label {
+    color: var(--text-secondary);
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 0.82rem;
+}
+
+/* Result Card */
+.result-card {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.legit-card {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.14) 0%, rgba(19, 27, 46, 0.95) 100%);
+    border: 1.5px solid var(--legit-border) !important;
+    box-shadow: 0 10px 30px var(--legit-glow) !important;
+}
+
+.legit-card .result-pill-badge {
+    background-color: rgba(16, 185, 129, 0.2);
+    color: #34d399;
+    border: 1px solid rgba(16, 185, 129, 0.4);
+}
+
+.legit-card .status-icon-box {
+    background-color: rgba(16, 185, 129, 0.2);
+    border: 1px solid var(--legit-border);
+}
+
+.fraud-card {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.18) 0%, rgba(19, 27, 46, 0.95) 100%);
+    border: 1.5px solid var(--fraud-border) !important;
+    box-shadow: 0 10px 30px var(--fraud-glow) !important;
+}
+
+.fraud-card .result-pill-badge {
+    background-color: rgba(239, 68, 68, 0.2);
+    color: #f87171;
+    border: 1px solid rgba(239, 68, 68, 0.4);
+}
+
+.fraud-card .status-icon-box {
+    background-color: rgba(239, 68, 68, 0.2);
+    border: 1px solid var(--fraud-border);
+}
+
+.status-icon-box {
+    width: 58px;
+    height: 58px;
+    border-radius: 16px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    flex-shrink: 0;
+}
+
+.prob-box {
+    background-color: rgba(11, 15, 25, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.progress-dark {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+/* Action Banner */
+.action-banner-box {
+    background-color: rgba(11, 15, 25, 0.65);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.action-icon-circle {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background-color: rgba(255, 255, 255, 0.05);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+/* XAI & Feature Contribution */
+.xai-container {
+    background-color: rgba(11, 15, 25, 0.7) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+.driver-card {
+    background-color: rgba(19, 27, 46, 0.7);
+    border: 1px solid var(--border-color);
+}
+
+.driver-row {
+    background-color: rgba(11, 15, 25, 0.8) !important;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    transition: transform 0.15s ease;
+}
+
+.driver-row:hover {
+    transform: translateX(3px);
+    border-color: rgba(255, 255, 255, 0.15);
+}
+
+.x-small {
+    font-size: 0.75rem;
+}
+
+/* Sidebar & Info stats */
+.stat-box {
+    background-color: var(--bg-card-subtle);
+    border: 1px solid var(--border-color);
+}
+
+/* Buttons */
+.btn-primary {
+    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    border: none;
+    font-weight: 600;
+    box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);
+    transition: all 0.2s ease;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, #1d4ed8, #1e40af);
+    box-shadow: 0 6px 20px rgba(37, 99, 235, 0.45);
+    transform: translateY(-1px);
+}
+
+.btn-primary:active {
+    transform: translateY(0);
+}
+
+/* Footer */
+.app-footer {
+    background-color: rgba(11, 15, 25, 0.6);
+}
+
+/* Responsive adjustments */
+@media (max-width: 576px) {
+    .feature-section {
+        padding: 0.85rem;
+    }
+    
+    .status-icon-box {
+        width: 48px;
+        height: 48px;
+        font-size: 1.5rem;
+    }
+}
