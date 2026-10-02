@@ -186,7 +186,42 @@ Open your web browser and navigate to:
 
 ---
 
-## 11. How to Use the Prediction Form
+## 11. How to Deploy to Render (Cloud Hosting)
+
+The application includes production configuration for **[Render](https://render.com)** (`gunicorn`, `render.yaml`, `Procfile`, and dynamic port binding).
+
+### Step 1: Push Code to GitHub
+1. Create a new repository on GitHub (e.g., `credit-card-fraud-detection`).
+2. Link your local project and push:
+   ```bash
+   git remote add origin https://github.com/<YOUR_GITHUB_USERNAME>/credit-card-fraud-detection.git
+   git push -u origin main
+   ```
+
+### Step 2: Deploy on Render
+- **Option A — 1-Click Blueprint (Recommended):**
+  1. Log into your [Render Dashboard](https://dashboard.render.com).
+  2. Click **New +** > **Blueprint**.
+  3. Select your `credit-card-fraud-detection` repository.
+  4. Render will automatically read `render.yaml`, configure Python, and deploy.
+  5. Click **Apply**.
+
+- **Option B — Standard Web Service:**
+  1. Click **New +** > **Web Service**.
+  2. Select your repository.
+  3. Configure settings:
+     - **Name:** `credit-card-fraud-detection`
+     - **Runtime:** `Python 3`
+     - **Build Command:** `pip install -r requirements.txt`
+     - **Start Command:** `gunicorn app:app`
+     - **Plan:** `Free`
+  4. Click **Create Web Service**.
+
+Render will deploy the application to a public HTTPS URL (e.g., `https://credit-card-fraud-detection-xxxx.onrender.com`).
+
+---
+
+## 12. How to Use the Prediction Form
 
 1. **Option A — Quick Benchmark Testing (Recommended):**
    - Click the **Legit Sample** button in the form header to pre-fill all 30 features with verified legitimate transaction data.
